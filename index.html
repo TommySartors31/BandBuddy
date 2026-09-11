@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BandBuddy</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="splash" class="splash-overlay">
+    <video id="splashVideo" src="assets/opening-animation.mp4" autoplay muted playsinline preload="auto" controls></video>
+    <button id="playSplash" class="play-splash-btn" type="button">▶ Play intro</button>
+    <button id="skipSplash" class="skip-btn" type="button">Skip ▶</button>
+  </div>
+  <div id="app">
+    <div class="login-wrap"><p class="muted">Loading BandBuddy…</p></div>
+  </div>
+  <script>
+    // Keep the intro independent from Firebase/app.js so a Firebase error
+    // can never prevent the opening video from loading or playing.
+    (() => {
+      const splash = document.getElementById("splash");
+      const video = document.getElementById("splashVideo");
+      const playBtn = document.getElementById("playSplash");
+      const skipBtn = document.getElementById("skipSplash");
+      if (!splash || !video) return;
+      let closed = false;
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        splash.classList.add("hidden");
+        try { video.pause(); } catch (_) {}
+      };
+      const play = () => {
+        video.muted = true;
+        video.setAttribute("playsinline", "");
+        const promise = video.play();
+        if (promise && promise.then) {
+          promise.then(() => playBtn?.classList.add("hidden"))
+            .catch(() => playBtn?.classList.remove("hidden"));
+        }
+      };
+      video.addEventListener("ended", close);
+      video.addEventListener("loadeddata", play, { once: true });
+      video.addEventListener("canplay", () => playBtn?.classList.remove("hidden"), { once: true });
+      video.addEventListener("error", () => {
+        console.error("Opening animation failed:", video.error, video.currentSrc);
+        playBtn?.classList.remove("hidden");
+      });
+      playBtn?.addEventListener("click", play);
+      skipBtn?.addEventListener("click", close);
+      video.addEventListener("click", () => { if (video.paused) play(); });
+      video.load();
+      play();
+    })();
+  </script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
